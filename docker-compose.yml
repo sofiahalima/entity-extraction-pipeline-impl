@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  ner_extractor:
+    build: docker_service
+    entrypoint: ""  # ✅ this forces it to respect Dockerfile ENTRYPOINT
+    volumes:
+      - ./shared_volume:/shared
+      - ./extracted_entity:/app/output
+      - ./model_cache:/root/.cache/huggingface
+   # entrypoint: ["python", "/app/run_extractor.py"]
