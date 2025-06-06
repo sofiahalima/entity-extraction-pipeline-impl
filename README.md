@@ -57,10 +57,17 @@ entity-extraction-pipeline-impl/
 **store_entities** : Saves final structured output as a Parquet file.
 
 ## Setup & Run
-1. Clear below folders
+1. Clear below folders if not empty
    - output
    - shared_volume
    - extracted_entity
+  
+   env variables in .env
+    - AIRFLOW_VERSION=2.10.5
+    - AIRFLOW__CORE__LOAD_EXAMPLES=false
+    - AIRFLOW_HOME=project root
+    - PROJECT_ROOT=project root
+    - PYTHONPATH=project root
      
 2. Build Docker Image
    - docker-compose build ner_extractor
