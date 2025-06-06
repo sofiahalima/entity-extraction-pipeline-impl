@@ -4,12 +4,14 @@ from airflow.operators.bash import BashOperator
 from datetime import datetime
 from dag_processing_service import load_documents,build_docker_command,store_entities
 from entity_matching_service import create_matched_entity_doc
+import os
 
+project_root = os.environ.get("PROJECT_ROOT")
 
 with DAG(
     "dag_service",
     schedule_interval=None,
-    start_date=datetime(2025, 6, 5),
+    start_date=datetime(2025, 6, 6),
 ) as dag:
 
     load_documents = PythonOperator(
@@ -27,7 +29,7 @@ with DAG(
     extract_entities_from_docker = BashOperator(
         task_id="run_entity_extraction",
         bash_command="{{ ti.xcom_pull(task_ids='generate_docker_command') }}",
-        cwd="/Users/sofiahalima/PycharmProjects/entity-extraction-pipeline-impl"
+        cwd=project_root
     )
 
     match_entities = PythonOperator(

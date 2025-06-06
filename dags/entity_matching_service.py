@@ -3,6 +3,11 @@ import json
 import pandas as pd
 import ast
 import hashlib
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+project_root = os.environ.get("PROJECT_ROOT")
 
 
 def extract_entity():
@@ -14,8 +19,8 @@ def extract_entity():
     Returns:
         List  of Dict: A dictionary containing all the data from the files
     """
-    project_root = Path(__file__).parent.parent
-    input_dir = project_root / 'extracted_entity'
+
+    input_dir = f"{project_root}/extracted_entity"
     rows = []
     for json_file in Path(input_dir).glob('*.json'):
         print("Extracting entity")
@@ -51,8 +56,8 @@ def match_alias(name, label, fn_alias_df):
     """
     for _, row in fn_alias_df.iterrows():
         if name in row['new_aliases'] and label == row['entity_type']:
-            return row['entity_id'], row['name'], 1
-    return None, None, 0
+            return row['entity_id'], row['name'], True
+    return None, None, False
 
 
 def create_matched_entity_doc():
@@ -69,14 +74,14 @@ def create_matched_entity_doc():
         be later saved as csv / json / parquet for comparison purposes
         or, can be imported into database tables
     """
-    project_root = Path(__file__).parent.parent
-    doc_df = pd.read_csv(project_root / 'data' / 'documents.csv')
+
+    doc_df = pd.read_csv(f"{project_root}/data/documents.csv")
     extracted_entities = extract_entity()
     df_extracted_entities = pd.DataFrame(extracted_entities)
 
     df_doc_entities = pd.merge(df_extracted_entities, doc_df, on='uuid', how='inner')
 
-    aliases_df = pd.read_csv(project_root / 'data' / 'entity_aliases.csv')
+    aliases_df = pd.read_csv(f"{project_root}/data/entity_aliases.csv")
     aliases_df['entity_id'] = aliases_df.apply(
         lambda row: hashlib.sha256((row['entity_type'] + row['name']).encode()).hexdigest(), axis=1
     )

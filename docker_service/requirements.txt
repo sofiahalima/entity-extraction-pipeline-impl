@@ -1,3 +1,4 @@
 gliner
 pandas
 logging
+pandera

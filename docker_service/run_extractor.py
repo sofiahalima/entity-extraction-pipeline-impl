@@ -7,11 +7,7 @@ from extractor import load_gliner_model, extract_entities
 import os
 import logging
 
-
-print("[DEBUG] Current working directory:", os.getcwd())
-print("[DEBUG] Input path:", sys.argv[1])
-print("[DEBUG] Output path:", sys.argv[2])
-
+logger = logging.getLogger(__name__)
 
 ts = datetime.now().strftime("%Y%m%d_%H%M%S")
 input_csv = sys.argv[1]
@@ -30,6 +26,6 @@ for _, row in df.iterrows():
 with open(output_json, 'w') as f:
     json.dump(results, f, indent=2)
 
-print(f"[INFO] Extraction complete: {output_json}")
+logger.info(f"[INFO] Extraction complete: {output_json}")
 
 

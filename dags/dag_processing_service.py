@@ -1,14 +1,17 @@
-import ast
 from pathlib import Path
-import json
 import pandas as pd
 from datetime import datetime
-import os
 import logging
-from rich import json
 from entity_matching_service import create_matched_entity_doc
+import os
+from dotenv import load_dotenv
 
-# timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+from schema.output_schema import entity_schema
+import pandera.pandas as pa
+
+load_dotenv()
+project_root = os.environ.get("PROJECT_ROOT")
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,7 +27,6 @@ def load_documents(**context):
         returns dataframe
     """
     logger.info("Loading documents...")
-
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     input_path = f"shared_volume/input_{timestamp}.csv"
 
@@ -34,7 +36,7 @@ def load_documents(**context):
     # Push the filename to XCom
     context['ti'].xcom_push(key='input_filename', value=f"input_{timestamp}.csv")
 
-    print(f"Saved input CSV to {input_path}")
+    logger.info(f"Saved input CSV to {input_path}")
 
     return df
 
@@ -50,18 +52,15 @@ def build_docker_command(**context):
     Returns:
         returns command as str
     """
+    logger.info("Running docker build...")
     filename = context['ti'].xcom_pull(task_ids='load_documents', key='input_filename')
+    logger.info(f"[build_docker_command] Input filename: {filename}")
     timestamp = filename.replace("input_", "").replace(".csv", "")
     input_path = f"/shared/{filename}"
     output_path = f"/app/output/extracted_entities_{timestamp}.json"
 
-    # command = (
-    #     f"docker-compose -f /Users/sofiahalima/PycharmProjects/entity-extraction-pipeline-impl/docker-compose.yml "
-    #     f"run --rm ner_extractor {input_path} {output_path}"
-    # )
-
     command = (
-        f"docker-compose -f /Users/sofiahalima/PycharmProjects/entity-extraction-pipeline-impl/docker-compose.yml "
+        f"docker-compose -f {project_root}/docker-compose.yml "
         f"run --rm ner_extractor python /app/run_extractor.py {input_path} {output_path}"
     )
 
@@ -77,73 +76,23 @@ def store_entities():
      For this project submission, it mimics the original concept of persisting the data
      to the database, so it can be used to further insights.
 
+     Schema validation is done using the following schema:entity_schema
+
     """
-    project_root = Path(__file__).parent.parent
-    output_doc_path = project_root / 'output' / 'output.csv'
-    logger.info("Storing output to {}".format(output_doc_path))
-    create_matched_entity_doc().to_csv(output_doc_path, index=False)
-    print(f" Entity matching results written to {output_doc_path}")
+
+    output_doc_path = f"{project_root}/output/output.csv"
+
+    df_entities = create_matched_entity_doc()
+    try:
+        validated_df = entity_schema.validate(df_entities)
+    except pa.errors.SchemaError as e:
+        logger.error(f" Schema validation failed:{e}")
+        raise
+    validated_df.to_csv(output_doc_path, index=False)
+
+    logger.info(f" Saved validated entity data to: {output_doc_path}")
 
 
-def extract_entities():
-    logger.info("Sending request to NER service to get extracted entities")
-
-# def load_aliases(path):
-#     df = pd.read_csv(path)
-#     df["aliases"] = df["aliases"].apply(ast.literal_eval)
-#     return [EntityAlias(**row) for _, row in df.iterrows()]
-#
-#
-# def match_entity(entity_text, entity_type, alias_table):
-#     for alias in alias_table:
-#         if alias.entity_type != entity_type:
-#             continue
-#         if entity_text == alias.name or entity_text in alias.aliases:
-#             return alias
-#     return None
-#
-#
-# def process_entities(doc_path, alias_csv, json_file, output_path):
-#     logger.info("Processing entities after matching with aliases")
-#
-#     alias_table = load_aliases(alias_csv)
-#
-#     docs = pd.read_csv(doc_path)
-#
-#     with open(json_file, 'r') as f:
-#         entity_data = json.load(f)
-#
-#     output_rows = []
-#
-#     for entry in entity_data:
-#         doc_id = entry["uuid"]
-#         doc_base = docs.get(doc_id)
-#         matched_entities = []
-#
-#         for ent in entry.get("entities", []):
-#             match = match_entity(ent["text"], ent["label"], alias_table)
-#             matched_entities.append(EntityMatch(
-#                 entity_type=ent["label"],
-#                 entity_text=ent["text"],
-#                 start_pos=ent["start"],
-#                 end_pos=ent["end"],
-#                 is_matched=bool(match),
-#                 matched_entity_id=match.id if match else None,
-#                 matched_entity_name=match.name if match else None
-#             ))
-#
-#         output_doc = EntityOutput(
-#             uuid=doc_base["uuid"],
-#             title=doc_base.get("title"),
-#             content=doc_base.get("content"),
-#             publication_date=doc_base.get("date"),
-#             inserted_at=datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-#             source=doc_base["url"],
-#             entities=matched_entities)
-#
-#         output_rows.append(output_doc.dict())
-#
-#     df = pd.DataFrame(output_rows)
-#     os.makedirs(os.path.dirname(output_path), exist_ok=True)
-#     df.to_parquet(output_path, index=False)
-#     print(f"Entity matching results written to {output_path}")
+# for testing
+if __name__ == "__main__":
+    store_entities()
