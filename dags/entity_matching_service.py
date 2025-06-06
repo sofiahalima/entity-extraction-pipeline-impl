@@ -36,7 +36,6 @@ def extract_entity():
             print(f"Error reading {json_file.name}: {str(e)}")
         except Exception as e:
             print(f"Unexpected error with {json_file.name}: {str(e)}")
-        print(rows)
     return rows
 
 
