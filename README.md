@@ -18,30 +18,9 @@ This repository contains an end-to-end entity extraction pipeline that processes
 
 ## Architecture
 
-```mermaid
-graph TD
-    A[Load Documents (CSV)] --> B[Entity Extraction (Docker)]
-    B --> C[Entity Matching (Alias Table)]
-    C --> D[Store to Parquet/SQLite]
 
-entity-extraction-pipeline-impl/
-│
-├── dags/                      # Airflow DAGs
-      ├── dag_service.py       # DAG starter service
-      ├── data_processing_service.py
-      ├── data_matching_service.py   
-├── docker_service/          # Docker context for NER service
-      ├── extractor.py       
-      ├── Dockerfile
-      ├── run_extractor.py   # Docker entrypoint: NER + output
-      └── requirements.txt       
-├── shared_volume/           # Input document CSVs shared accross docker
-├── extracted_entity/        # extracted Input JSON files received from docker
-├── model_cache/             # Cached GLiNER models (mounted)
-├── data/                    # Source document and alias CSVs
-├── output/                  # Output result to be stored in DB
-├── docker-compose.yml
-```
+![image](https://github.com/user-attachments/assets/ee00f463-55a8-45e0-8138-d48b0b9a0ade)
+
 
 **DAG & Docker service are build in different directory, so that its easy for docker_service to be scaled in future
 
