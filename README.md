@@ -41,6 +41,7 @@ entity-extraction-pipeline-impl/
 ├── data/                    # Source document and alias CSVs
 ├── output/                  # Output result to be stored in DB
 ├── docker-compose.yml
+```
 
 **DAG & Docker service are build in different directory, so that its easy for docker_service to be scaled in future
 
@@ -57,24 +58,24 @@ store_entities: Saves final structured output as a Parquet file.
 
 ## Setup & Run
 1. Build Docker Image
-docker-compose build ner_extractor
+   docker-compose build ner_extractor
 
 2. Start Airflow
-export AIRFLOW_HOME=$(pwd)/airflow_home
-airflow db init
-airflow webserver --port 8080
-# in another terminal
-airflow scheduler
+    export AIRFLOW_HOME=$(pwd)/airflow_home
+    airflow db init
+    airflow webserver --port 8080
+    
+    airflow scheduler (in another terminal)
                 OR
-uv run --env-file .env airflow standalone
+    uv run --env-file .env airflow standalone
 
 3. Trigger DAG
-via UI
+    via UI
 
 <img width="1488" alt="Screenshot 2025-06-06 at 10 36 36 AM" src="https://github.com/user-attachments/assets/45e7b761-7649-4bf7-becd-1068f5bac491" />
 
 🧪 Sample Command for Manual Run
-docker-compose run --rm ner_extractor /shared/input_test.csv /app/output/output_test.json
+    docker-compose run --rm ner_extractor /shared/input_test.csv /app/output/output_test.json
 
 ## Model Caching
 Model is cached at: /root/.cache/huggingface/
@@ -86,15 +87,19 @@ Mapped to host via: - ./model_cache:/root/.cache/huggingface
 shows cache logs during task execution.
 
 ## Output Format
--uuid (from document)
+    -uuid (from document)
 
--title, content, date, etc. (from document)
+    -title, content, date, etc. (from document)
 
--entities: a list of:       (from extracted entity & aliases table)
+    -entities: a list of:       (from extracted entity & aliases table)
 
-  -entity_text, entity_type, start_pos, end_pos
-
-  -is_matched, matched_entity_id, matched_entity_name
+          -entity_text, 
+          -entity_type, 
+          -start_pos,
+          -end_pos
+          -is_matched, 
+          -matched_entity_id, 
+          -matched_entity_name
 
 
 
