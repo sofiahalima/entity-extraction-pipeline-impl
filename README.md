@@ -111,6 +111,12 @@ Mapped to host via:
           -matched_entity_id, 
           -matched_entity_name
 
+## Enhancements
+    - Implement retry logic with exponential backoff in Airflow tasks to handle transient failures & alert monitoring.
+    - Catch & log specific exceptions (e.g., ValueError, IOError) in docker service and matching components for extensive error diagnostics.
+    - Add cross-field schema validation (e.g., start_pos < end_pos) using pandera.
+    - Encrypt sensitive config/env values using Azure Key Vault, Airflow Secrets Backend etc.
+    - Expose the pipeline via FastAPI for real-time document uploads and entity response.
 
 
 
